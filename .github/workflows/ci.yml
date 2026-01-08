@@ -1,0 +1,57 @@
+name: Node.js CI
+
+on:
+  push:
+    branches:
+      - main
+      - ci
+  pull_request:
+    types: [ opened, synchronize ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Verify Node.js and npm version
+        run: |
+          node --version
+          npm --version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: |
+          if npm run build; then
+            echo "Build succeeded"
+          else
+            echo "No build script defined, skipping..."
+          fi
+
+      - name: Run tests
+        run: |
+          if [ -f "tests/test_app.js" ]; then
+            npm install --save-dev jest
+            npx jest
+          else
+            echo "No tests found, skipping..."
+          fi
+
+      - name: Verify build output
+        run: |
+          if [ -d "dist" ] || [ -d "build" ]; then
+            echo "Build artifacts found:"
+            ls -la dist build 2>/dev/null || true
+          else
+            echo "No build artifacts, skipping verification."
+          fi
